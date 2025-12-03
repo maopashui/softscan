@@ -1,4 +1,4 @@
-# SteamOCR 演示程序（Gin + React 蒸汽朋克风）
+# SoftScan 演示程序（Gin + React ）
 
 ## 后端启动
 
@@ -103,3 +103,12 @@ curl -X POST http://localhost:5001/ocr \
 登录成功后，前端会将 token 写入 `localStorage`，并通过 axios 拦截器自动携带 `Authorization: Bearer <token>` 访问 `/ocr` 接口。  
 单张图片大于 8 MB 时，后端会自动进行最多 3 次压缩，前端会提示「图纸超重，即将自动压缩」。***
 
+当前已将前端代码打包到backend下dist路径下，直接打包为go二进制文件。
+
+～～～shell
+cd backend
+docker build -t softscan .
+docker run --rm -p 5001:5001 \
+  -v $(pwd)/steamocr.db:/app/steamocr.db \
+  softscan
+~~~

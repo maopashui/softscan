@@ -1,0 +1,5 @@
+{
+  "name": "SoftScan OCR",
+  "description": "A gentle, user-friendly OCR application with history tracking, image annotation, and text extraction.",
+  "requestFramePermissions": []
+}

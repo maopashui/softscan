@@ -1,0 +1,13 @@
+# db
+backend/steamocr.db
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.local
+
+# editor
+.vscode/
+.idea/
+.DS_Store
+.cursor/

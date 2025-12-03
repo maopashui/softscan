@@ -1,6 +1,9 @@
 import { OCRBlock, OCRResult, HistoryItem } from "../types";
 
-const API_BASE = "http://localhost:5001";
+// 自动检测当前域名和端口（开发和生产环境都适用）
+const API_BASE = process.env.NODE_ENV === 'development'
+  ? "http://localhost:5001"  // 开发环境
+  : "";  // 生产环境使用相对路径（前后端同域）
 
 // Helper: File -> 纯 base64（不带 data: 前缀）
 export const fileToGenerativePart = async (file: File): Promise<string> => {

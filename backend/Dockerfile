@@ -1,5 +1,5 @@
 ###### 构建阶段：在容器内编译带 CGO 的 go-sqlite3 ######
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # 替换 Alpine 源为国内镜像，加速 apk
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \

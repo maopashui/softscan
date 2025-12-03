@@ -108,7 +108,9 @@ curl -X POST http://localhost:5001/ocr \
 ～～～shell
 cd backend
 docker build -t softscan .
-docker run --rm -p 5001:5001 \
+docker run -d \
+  -p 5001:5001 \
   -v $(pwd)/steamocr.db:/app/steamocr.db \
+  --name softscan \
   softscan
 ~~~

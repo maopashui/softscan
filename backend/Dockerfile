@@ -1,5 +1,5 @@
 ###### 构建阶段：在容器内编译带 CGO 的 go-sqlite3 ######
-FROM golang:1.23-alpine AS builder
+FROM docker.m.daocloud.io/golang:1.23-alpine AS builder
 
 # 替换 Alpine 源为国内镜像，加速 apk
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -20,14 +20,14 @@ COPY . .
 
 # 使用 CGO 编译 Linux amd64 可执行文件，开启 release 优化
 ENV CGO_ENABLED=1 GOOS=linux GOARCH=amd64
-RUN go build -ldflags="-s -w" -o app .
+RUN go build -ldflags="-s -w" -o softscan .
 
 
 ###### 运行阶段：精简镜像，仅带运行所需依赖 ######
-FROM alpine:3.20
+FROM docker.m.daocloud.io/alpine:3.20
 
 LABEL maintainer="you" \
-      description="SteamOCR backend with embedded frontend (sqlite3)"
+      description="SoftScan backend with embedded frontend (sqlite3)"
 
 # 替换 Alpine 源为国内镜像，加速 apk
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
@@ -38,7 +38,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 WORKDIR /app
 
 # 从构建阶段复制编译好的二进制
-COPY --from=builder /app/app /app/app
+COPY --from=builder /app/softscan /app/softscan
 
 # 如需预置数据库，可在宿主挂载卷：
 #   docker run -v $(pwd)/steamocr.db:/app/steamocr.db ...
@@ -47,8 +47,9 @@ EXPOSE 5001
 
 # Gin 使用 release 模式运行
 ENV GIN_MODE=release
+RUN chmod +x /app/softscan && chown -R nobody:nogroup /app
 
 USER nobody
 
-ENTRYPOINT ["/app/app"]
+ENTRYPOINT ["/app/softscan"]
 

@@ -33,8 +33,8 @@ func RegisterUser(ctx context.Context, db *sql.DB, username, password string) er
 		return ErrUserExists
 	}
 	_, err = db.ExecContext(ctx,
-		"INSERT INTO users(username, password_hash, created_at) VALUES(?,?,?)",
-		username, hashPassword(password), Now())
+		"INSERT INTO users(username, password_hash, created_at, daily_limit) VALUES(?,?,?,?)",
+		username, hashPassword(password), Now(), 20)
 	return err
 }
 

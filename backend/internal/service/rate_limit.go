@@ -13,7 +13,7 @@ var (
 )
 
 const (
-	maxDailyOCRRequests = 3 // 默认限制
+	maxDailyOCRRequests = 20 // 默认限制
 )
 
 // GetUserDailyLimit 获取用户的每日限制次数

@@ -71,6 +71,11 @@ export const performOCR = async (base64Image: string): Promise<OCRResult> => {
     body: JSON.stringify({ image: base64Image }),
   });
 
+  if (resp.status === 429) {
+    const data = await resp.json();
+    throw new Error(data.msg || "已达到当日最大识别次数");
+  }
+  
   if (!resp.ok) {
     throw new Error(`OCR 请求失败: ${resp.status}`);
   }

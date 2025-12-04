@@ -82,7 +82,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
         saveToHistory(displaySrc, ocrData);
 
       } catch (err) {
-        alert("识别失败，请检查网络或图片格式。");
+        const errorMessage = err instanceof Error ? err.message : "识别失败，请检查网络或图片格式。";
+        alert(errorMessage);
         console.error(err);
       } finally {
         setLoading(false);

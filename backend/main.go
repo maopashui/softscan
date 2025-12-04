@@ -18,7 +18,7 @@ var embeddedDist embed.FS
 
 func main() {
 	// 复古机械风启动日志
-	log.Println(`[⚙️] SteamOCR | 齿轮开始转动，蒸汽锅炉点火，系统即将启动`)
+	log.Println(`[⚙️] SoftScan | 齿轮开始转动，蒸汽锅炉点火，系统即将启动`)
 
 	// 初始化数据库
 	db, err := service.InitDB("steamocr.db")
@@ -46,7 +46,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-quit
-		log.Println(`[⚙️] SteamOCR | 收到停机信号，开始冷却齿轮与蒸汽管路，清理临时文件`)
+		log.Println(`[⚙️] SoftScan | 收到停机信号，开始冷却齿轮与蒸汽管路，清理临时文件`)
 		service.CleanupTempDir()
 		os.Exit(0)
 	}()

@@ -33,7 +33,7 @@ func PrepareImageForOCR(b64 string) (*CompressResult, int, error) {
 		}
 		return nil, 5, err
 	}
-	log.Printf("[⚙️] SteamOCR | 齿轮压缩机工作中：原始大小 %.2f MB → %.2f MB",
+	log.Printf("[⚙️] SoftScan | 齿轮压缩机工作中：原始大小 %.2f MB → %.2f MB",
 		float64(originalSize)/1024.0/1024.0,
 		float64(len(compressed))/1024.0/1024.0,
 	)

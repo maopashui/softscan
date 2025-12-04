@@ -182,6 +182,7 @@ export const login = async (username: string, password: string): Promise<void> =
   }
 
   localStorage.setItem("token", data.token);
+  localStorage.setItem("username", username); // 保存用户名
 };
 
 // 注册接口

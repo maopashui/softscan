@@ -20,6 +20,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('username'); // 清除用户名
     setView(AppView.LOGIN);
   };
 

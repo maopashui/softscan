@@ -55,6 +55,34 @@ const getToken = (): string | null => {
   return localStorage.getItem("token");
 };
 
+// 统一的错误处理辅助函数
+// 先解析响应体，然后根据状态码和 errcode 处理错误
+async function handleResponse<T extends { errcode: number; msg: string }>(
+  resp: Response,
+  defaultErrorMsg: string
+): Promise<T> {
+  // 先尝试解析响应体（无论状态码如何）
+  let data: T;
+  try {
+    data = await resp.json();
+  } catch (e) {
+    // 如果解析失败，抛出状态码相关的错误
+    throw new Error(resp.ok ? defaultErrorMsg : `${defaultErrorMsg}: ${resp.status}`);
+  }
+
+  // 如果状态码不是 200，使用响应体中的 msg 作为错误信息
+  if (!resp.ok) {
+    throw new Error(data.msg || `${defaultErrorMsg}: ${resp.status}`);
+  }
+
+  // 如果状态码是 200，检查 errcode 是否为 0
+  if (data.errcode !== 0) {
+    throw new Error(data.msg || defaultErrorMsg);
+  }
+
+  return data;
+}
+
 // 调用后端 /ocr 接口
 export const performOCR = async (base64Image: string): Promise<OCRResult> => {
   const token = getToken();
@@ -71,19 +99,7 @@ export const performOCR = async (base64Image: string): Promise<OCRResult> => {
     body: JSON.stringify({ image: base64Image }),
   });
 
-  if (resp.status === 429) {
-    const data = await resp.json();
-    throw new Error(data.msg || "已达到当日最大识别次数");
-  }
-  
-  if (!resp.ok) {
-    throw new Error(`OCR 请求失败: ${resp.status}`);
-  }
-
-  const data: BackendOCRResponse = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "OCR 识别失败");
-  }
+  const data = await handleResponse<BackendOCRResponse>(resp, "OCR 识别失败");
 
   // 将后端 box 映射为前端使用的 0-1000 归一化坐标
   const { width, height } = data;
@@ -118,14 +134,7 @@ export const fetchOCRHistory = async (): Promise<HistoryItem[]> => {
     },
   });
 
-  if (!resp.ok) {
-    throw new Error(`获取历史记录失败: ${resp.status}`);
-  }
-
-  const data: BackendListHistoryResponse = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "获取历史记录失败");
-  }
+  const data = await handleResponse<BackendListHistoryResponse>(resp, "获取历史记录失败");
 
   // 由于后端只保存文本和时间，这里不再还原缩略图和标注框
   const list: HistoryItem[] = data.data.map((item) => ({
@@ -153,14 +162,7 @@ export const clearOCRHistory = async (): Promise<void> => {
     },
   });
 
-  if (!resp.ok) {
-    throw new Error(`清空历史记录失败: ${resp.status}`);
-  }
-
-  const data: { errcode: number; msg: string } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "清空历史记录失败");
-  }
+  await handleResponse<{ errcode: number; msg: string }>(resp, "清空历史记录失败");
 };
 
 // 登录接口
@@ -173,13 +175,10 @@ export const login = async (username: string, password: string): Promise<void> =
     body: JSON.stringify({ username, password }),
   });
 
-  if (!resp.ok) {
-    throw new Error(`登录请求失败: ${resp.status}`);
-  }
-
-  const data: { errcode: number; msg: string; token?: string } = await resp.json();
-  if (data.errcode !== 0 || !data.token) {
-    throw new Error(data.msg || "登录失败");
+  const data = await handleResponse<{ errcode: number; msg: string; token?: string }>(resp, "登录失败");
+  
+  if (!data.token) {
+    throw new Error(data.msg || "登录失败：未返回 token");
   }
 
   localStorage.setItem("token", data.token);
@@ -195,14 +194,7 @@ export const register = async (username: string, password: string): Promise<void
     body: JSON.stringify({ username, password }),
   });
 
-  if (!resp.ok) {
-    throw new Error(`注册请求失败: ${resp.status}`);
-  }
-
-  const data: { errcode: number; msg: string } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "注册失败");
-  }
+  await handleResponse<{ errcode: number; msg: string }>(resp, "注册失败");
 };
 
 // 设置 OCR 引擎 token（仅管理员）
@@ -221,15 +213,7 @@ export const setOCREngineToken = async (token: string): Promise<void> => {
     body: JSON.stringify({ token }),
   });
 
-  if (!resp.ok) {
-    const data = await resp.json();
-    throw new Error(data.msg || "设置失败");
-  }
-
-  const data: { errcode: number; msg: string } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "设置失败");
-  }
+  await handleResponse<{ errcode: number; msg: string }>(resp, "设置失败");
 };
 
 // 获取 OCR 引擎配置（仅管理员，一次返回 URL 和 Token 状态）
@@ -246,15 +230,7 @@ export const getOCREngineConfig = async (): Promise<{ hasToken: boolean; hasURL:
     },
   });
 
-  if (!resp.ok) {
-    const data = await resp.json();
-    throw new Error(data.msg || "获取配置失败");
-  }
-
-  const data: { errcode: number; msg: string; hasToken: boolean; hasURL: boolean; currentURL: string } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "获取配置失败");
-  }
+  const data = await handleResponse<{ errcode: number; msg: string; hasToken: boolean; hasURL: boolean; currentURL: string }>(resp, "获取配置失败");
 
   return { hasToken: data.hasToken, hasURL: data.hasURL, currentURL: data.currentURL };
 };
@@ -281,15 +257,7 @@ export const setOCREngineURL = async (url: string): Promise<void> => {
     body: JSON.stringify({ url }),
   });
 
-  if (!resp.ok) {
-    const data = await resp.json();
-    throw new Error(data.msg || "设置失败");
-  }
-
-  const data: { errcode: number; msg: string } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "设置失败");
-  }
+  await handleResponse<{ errcode: number; msg: string }>(resp, "设置失败");
 };
 
 // 获取 OCR 引擎 URL（仅管理员，向后兼容）
@@ -321,15 +289,7 @@ export const getUserList = async (): Promise<UserInfo[]> => {
     },
   });
 
-  if (!resp.ok) {
-    const data = await resp.json();
-    throw new Error(data.msg || "获取用户列表失败");
-  }
-
-  const data: { errcode: number; msg: string; data: UserInfo[] } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "获取用户列表失败");
-  }
+  const data = await handleResponse<{ errcode: number; msg: string; data: UserInfo[] }>(resp, "获取用户列表失败");
 
   return data.data;
 };
@@ -350,13 +310,5 @@ export const updateUserLimit = async (userId: number, limit: number): Promise<vo
     body: JSON.stringify({ user_id: userId, limit }),
   });
 
-  if (!resp.ok) {
-    const data = await resp.json();
-    throw new Error(data.msg || "更新失败");
-  }
-
-  const data: { errcode: number; msg: string } = await resp.json();
-  if (data.errcode !== 0) {
-    throw new Error(data.msg || "更新失败");
-  }
+  await handleResponse<{ errcode: number; msg: string }>(resp, "更新失败");
 };
